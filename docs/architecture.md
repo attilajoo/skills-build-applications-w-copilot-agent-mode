@@ -28,22 +28,23 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 
 ## Implementation decisions
 
-Record your plan here before editing code.
-
-- Presentation tier decision:
-- Logic tier decision:
-- Data tier decision:
-- Activity tracking approach:
-- Team management approach:
-- Leaderboard approach:
-- Workout suggestions approach:
+- Presentation tier decision: Keep the React views responsible only for rendering, request orchestration, and user feedback states; all API URL construction and fetch logic stays in the shared client so each route can handle loading, empty, success, and error states consistently.
+- Logic tier decision: Keep Express route handlers thin and move validation, aggregation, and business rules into explicit service functions under `octofit-tracker/backend/src`; return deliberate 4xx responses for bad IDs or missing seed data instead of leaking cast errors or 500s.
+- Data tier decision: Use Mongoose schemas to enforce required fields and relationships, while the seed script uses idempotent upserts to reconcile stable demo users, teams, activities, and workout suggestions without clearing live data.
+- Activity tracking approach: Accept activity creation with `userId`, `teamId`, `type`, and `minutes`, validate both references exist, compute points from exercise duration, and stamp `occurredAt` on creation.
+- Team management approach: Enforce a required team name and mascot, default `members` to an empty array, and keep member IDs as references so list responses expose consistent team membership data.
+- Leaderboard approach: Aggregate each team’s total activity points, sort descending, and assign a 1-based rank so the API response mirrors the scoreboard contract exactly.
+- Workout suggestions approach: Match suggestions to the seeded user’s recent activity pattern or goal, include a human-readable reason, and return a 4xx for unknown email addresses rather than a generic empty result.
 
 ## Test plan
 
-Record the commands you run and what each failure means.
-
 - Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
+  - Failure means the schema contract for `User`, `Team`, `Activity`, and `Workout` is incomplete; the seed script may also be failing to create stable demo records.
 - API command: `npm run test:api --prefix octofit-tracker/backend`
+  - Failure means the `/api/*` routes do not validate inputs correctly, aggregate leaderboard totals, or match workout suggestions to user behavior.
 - Frontend command: `npm test --prefix octofit-tracker/frontend`
+  - Failure means the presentation layer is not rendering the expected API data or accessible states for loading, empty results, and errors.
 - Backend build command: `npm run build --prefix octofit-tracker/backend`
+  - Failure means the TypeScript backend does not compile cleanly and likely has type or route/service issues that unit tests may not catch.
 - Frontend build command: `npm run build --prefix octofit-tracker/frontend`
+  - Failure means the React app, route modules, or API client wiring does not compile in production mode.

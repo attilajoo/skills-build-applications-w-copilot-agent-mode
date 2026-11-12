@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
-import { getJson } from '../api/client.js';
 
 type ResourceState<T> =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'success'; data: T };
 
-export function useApiResource<T>(path: string): ResourceState<T> {
+export function useApiResource<T>(request: () => Promise<T>): ResourceState<T> {
   const [state, setState] = useState<ResourceState<T>>({ status: 'loading' });
 
   useEffect(() => {
     let active = true;
     setState({ status: 'loading' });
-    getJson<T>(path).then(
+    request().then(
       (data) => {
         if (active) setState({ status: 'success', data });
       },
@@ -28,7 +27,7 @@ export function useApiResource<T>(path: string): ResourceState<T> {
     return () => {
       active = false;
     };
-  }, [path]);
+  }, [request]);
 
   return state;
 }

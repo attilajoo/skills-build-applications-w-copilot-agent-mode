@@ -1,10 +1,12 @@
+import { getJson } from '../api/client.js';
 import { useApiResource } from '../hooks/useApiResource.js';
 
 type Activity = { _id?: string; type: string; minutes: number; points: number };
 type ActivityResponse = { activities: Activity[] };
+const loadActivities = () => getJson<ActivityResponse>('/api/activities');
 
 export default function Activities() {
-  const state = useApiResource<ActivityResponse>('/api/activities');
+  const state = useApiResource(loadActivities);
 
   return <section className="card h-100"><div className="card-body">
     <h2 className="h4">Activities</h2>
